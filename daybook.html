@@ -284,19 +284,19 @@ function todayStr(){ return new Date().toISOString().slice(0,10); }
 
 async function loadState(){
   try{
-    const res = await window.storage.get(STORE_KEY, false);
-    if(res && res.value){
-      const loaded = JSON.parse(res.value);
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const loaded = JSON.parse(raw);
       state = Object.assign({dailies:[],habits:[],todos:[],contextByDate:{}}, loaded);
     }
-  }catch(e){ /* no data yet */ }
+  }catch(e){ /* no data yet, or storage unavailable */ }
   render();
 }
 let saveTimeout;
 function saveState(){
   clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async ()=>{
-    try{ await window.storage.set(STORE_KEY, JSON.stringify(state), false); }
+  saveTimeout = setTimeout(()=>{
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
     catch(e){ console.error("save failed", e); }
   }, 150);
 }
