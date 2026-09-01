@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Daybook</title>
+<style>
+  :root{
+    --bg: #FAF7FF;
+    --panel: #FFFFFF;
+    --ink: #241C3B;
+    --ink-soft: #7A7192;
+    --line: #EAE3FB;
+
+    --purple: #7C5CFC;
+    --purple-soft: #EFE9FF;
+    --orange: #FF8A3D;
+    --orange-soft: #FFEEE0;
+    --green: #21B573;
+    --green-soft: #E1F8ED;
+    --pink: #FF5C8A;
+    --pink-soft: #FFE6ED;
+    --blue: #3E8EDE;
+    --blue-soft: #E4F0FD;
+    --gold: #F2B705;
+
+    --radius-card: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{ font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; }
+
+  #app{ display:flex; min-height:100vh; }
+
+  #sidebar{
+    width:230px;
+    flex-shrink:0;
+    background: linear-gradient(180deg, #2A1F55 0%, #4A2E8C 100%);
+    padding:28px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+    color:#fff;
+  }
+  #brand{
+    font-family: Georgia, serif;
+    font-size:23px;
+    font-weight:600;
+    color:#fff;
+  }
+  #brand .dot{ color:var(--gold); }
+  nav.tabs{ display:flex; flex-direction:column; gap:4px; }
+  .tab-btn{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    color:rgba(255,255,255,0.72);
+    font-size:14.5px;
+    user-select:none;
+  }
+  .tab-btn:hover{ background:rgba(255,255,255,0.08); color:#fff; }
+  .tab-btn.active{ background:rgba(255,255,255,0.16); color:#fff; font-weight:600; }
+  .tab-icon{ width:18px; text-align:center; }
+  #dateblock{ margin-top:auto; color:rgba(255,255,255,0.55); font-size:12.5px; padding:0 4px; }
+
+  main{ flex:1; min-width:0; padding:32px 40px 100px; max-width:860px; }
+  .page-head{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px;}
+  .page-head h1{ font-size:27px; margin:0; font-weight:600; }
+  .page-sub{ color:var(--ink-soft); font-size:13.5px; margin-top:3px; }
+
+  .btn{
+    border:none; cursor:pointer; font-size:13.5px; font-family:inherit;
+    padding:10px 18px; border-radius:24px; background:var(--purple); color:#fff;
+    display:inline-flex; align-items:center; gap:6px; font-weight:600;
+    box-shadow:0 3px 10px rgba(124,92,252,0.35);
+  }
+  .btn:hover{ filter:brightness(1.06); }
+  .btn.orange{ background:var(--orange); box-shadow:0 3px 10px rgba(255,138,61,0.35); }
+  .btn.green{ background:var(--green); box-shadow:0 3px 10px rgba(33,181,115,0.3); }
+  .btn.ghost{ background:transparent; color:var(--ink); border:1px solid var(--line); box-shadow:none; font-weight:500; }
+  .btn.ghost:hover{ background:var(--purple-soft); }
+  .btn.small{ padding:6px 12px; font-size:12.5px; }
+  .btn.danger{ background:transparent; color:#D6455B; box-shadow:none; }
+  .btn.danger:hover{ background:var(--pink-soft); }
+
+  .segctrl{ display:inline-flex; background:var(--panel); border:1px solid var(--line); border-radius:24px; padding:3px; gap:2px; }
+  .segctrl .seg{ padding:7px 14px; border-radius:20px; font-size:13px; cursor:pointer; color:var(--ink-soft); font-weight:600; }
+  .segctrl .seg.sel{ color:#fff; }
+  .segctrl .seg.sel.home{ background:var(--blue); }
+  .segctrl .seg.sel.office{ background:var(--pink); }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:4px solid var(--purple);
+    border-radius:var(--radius-card);
+    padding:16px 18px;
+    margin-bottom:12px;
+    box-shadow:0 1px 3px rgba(60,40,120,0.05);
+  }
+  .card.habit-card{ border-left-color: var(--orange); }
+  .card.todo-card{ border-left-color: var(--green); }
+  .card.ctx-home{ border-left-color: var(--blue); }
+  .card.ctx-office{ border-left-color: var(--pink); }
+
+  .card-top{ display:flex; align-items:flex-start; gap:12px; }
+  .check-circle{
+    width:22px; height:22px; border-radius:50%; border:2px solid #D8CFF5;
+    flex-shrink:0; margin-top:2px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .check-circle.done{ background:var(--purple); border-color:var(--purple); }
+  .check-circle.done.todo{ background:var(--green); border-color:var(--green); }
+  .check-circle.done::after{ content:"✓"; color:#fff; font-size:13px; font-weight:700; }
+  .item-title{ font-weight:700; font-size:15.5px; }
+  .item-title.done{ text-decoration:line-through; color:var(--ink-soft); }
+  .item-meta{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .tag{
+    font-size:11.5px; padding:3px 10px; border-radius:20px; background:var(--purple-soft); color:var(--purple); font-weight:600;
+  }
+  .tag.gold{ background:#FFF4D1; color:#9A7300; }
+  .tag.home{ background:var(--blue-soft); color:var(--blue); }
+  .tag.office{ background:var(--pink-soft); color:var(--pink); }
+  .tag.green{ background:var(--green-soft); color:var(--green); }
+  .item-notes{ color:var(--ink-soft); font-size:13px; margin-top:7px; white-space:pre-wrap; }
+  .checklist-mini{ margin-top:9px; display:flex; flex-direction:column; gap:5px; }
+  .checklist-mini-row{ display:flex; align-items:center; gap:8px; font-size:13px; }
+  .checklist-mini-row input[type=checkbox]{ accent-color: var(--purple); width:15px; height:15px; }
+  .checklist-mini-row.done span{ text-decoration:line-through; color:var(--ink-soft); }
+  .card-actions{ margin-left:auto; display:flex; gap:4px; flex-shrink:0; }
+  .icon-btn{ background:none; border:none; cursor:pointer; color:var(--ink-soft); font-size:14px; padding:5px; border-radius:6px; }
+  .icon-btn:hover{ color:var(--ink); background:var(--purple-soft); }
+  .icon-btn:disabled{ opacity:0.28; cursor:default; }
+  .icon-btn:disabled:hover{ background:none; color:var(--ink-soft); }
+  .reorder-grp{ display:flex; flex-direction:column; gap:1px; margin-right:2px; }
+  .reorder-grp .icon-btn{ font-size:11px; padding:2px 5px; }
+  .ctx-hint{ color:var(--ink-soft); font-size:12px; margin-top:2px; }
+
+  .timeline-wrap{ display:flex; flex-direction:column; gap:0; margin-top:4px; }
+  .tl-row{ display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); align-items:flex-start; }
+  .tl-row:last-child{ border-bottom:none; }
+  .tl-time{ width:74px; flex-shrink:0; font-size:12.5px; font-weight:700; color:var(--ink-soft); padding-top:1px; }
+  .tl-body{ flex:1; font-size:13.5px; }
+  .tl-busy .tl-time{ color:var(--ink); }
+  .tl-busy .tl-body{ font-weight:600; }
+  .tl-free .tl-body{ color:var(--green); font-weight:600; }
+  .tl-free{ background:var(--green-soft); border-radius:8px; padding:9px 8px; border-bottom:none; margin:3px 0; }
+  .tl-untimed{ margin-top:14px; }
+  .tl-untimed-row{ display:flex; align-items:center; gap:9px; padding:6px 0; font-size:13.5px; }
+
+  .empty{ color:var(--ink-soft); font-size:13.5px; padding:34px 6px; text-align:center; border:1.5px dashed var(--line); border-radius:12px; }
+  .empty a{ color:var(--purple); font-weight:700; text-decoration:none; }
+  .empty a:hover{ text-decoration:underline; }
+
+  .habit-week{ display:flex; gap:5px; margin-top:9px; }
+  .habit-dot{
+    width:26px; height:26px; border-radius:8px; background:var(--bg); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--ink-soft); cursor:pointer;
+  }
+  .habit-dot.done{ background:var(--orange); border-color:var(--orange); color:#fff; }
+  .habit-dot.today{ box-shadow:0 0 0 2px var(--gold); }
+  .streak{ font-size:12.5px; color:#B36A00; font-weight:700; background:var(--orange-soft); padding:3px 10px; border-radius:20px; }
+
+  .stat-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:12px; }
+  .stat-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .stat-row:last-child{ margin-bottom:0; }
+  .stat-label{ width:150px; font-size:13.5px; font-weight:600; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .stat-bar-track{ flex:1; height:10px; background:var(--bg); border-radius:6px; overflow:hidden; }
+  .stat-bar-fill{ height:100%; border-radius:6px; }
+  .stat-pct{ width:42px; text-align:right; font-size:12.5px; color:var(--ink-soft); font-weight:600; flex-shrink:0; }
+  .stat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+  .stat-box{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; text-align:center; }
+  .stat-box .num{ font-size:26px; font-weight:700; }
+  .stat-box .lbl{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+
+  .cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .cal-nav{ display:flex; gap:6px; align-items:center; }
+  .cal-nav button{ background:var(--panel); border:1px solid var(--line); border-radius:8px; width:32px; height:32px; cursor:pointer; font-size:14px; }
+  .cal-month-label{ font-weight:700; font-size:16px; min-width:150px; text-align:center; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .cal-dow{ text-align:center; font-size:11px; color:var(--ink-soft); font-weight:700; padding-bottom:4px; }
+  .cal-cell{
+    aspect-ratio:1; border-radius:10px; background:var(--panel); border:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; position:relative;
+    font-size:13px; gap:3px;
+  }
+  .cal-cell.empty-cell{ background:transparent; border:none; cursor:default; }
+  .cal-cell.today{ box-shadow:0 0 0 2px var(--gold); }
+  .cal-cell .dnum{ font-weight:600; }
+  .cal-dots{ display:flex; gap:2px; }
+  .cal-dot{ width:6px; height:6px; border-radius:50%; }
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(36,28,59,0.5); display:none;
+    align-items:flex-start; justify-content:center; z-index:50; overflow-y:auto; padding:40px 16px;
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background:var(--panel); border-radius:16px; width:100%; max-width:480px;
+    padding:26px 26px 22px; margin-bottom:40px;
+  }
+  .modal h2{ margin:0 0 18px; font-size:19px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; color:var(--ink-soft); margin-bottom:5px; font-weight:600; }
+  .field input[type=text], .field textarea, .field input[type=date], .field select{
+    width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px; font-family:inherit; font-size:14px; background:#FDFCFF;
+  }
+  .field input:focus, .field textarea:focus{ outline:none; border-color:var(--purple); }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .row2{ display:flex; gap:12px; }
+  .row2 > div{ flex:1; }
+  .pillgroup{ display:flex; gap:6px; flex-wrap:wrap; }
+  .pill{ padding:7px 13px; border:1.5px solid var(--line); border-radius:20px; font-size:13px; cursor:pointer; color:var(--ink-soft); font-weight:600; }
+  .pill.sel{ background:var(--purple); color:#fff; border-color:var(--purple); }
+  .pill.sel.home{ background:var(--blue); border-color:var(--blue); }
+  .pill.sel.office{ background:var(--pink); border-color:var(--pink); }
+  .checklist-edit-row{ display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+  .checklist-edit-row input[type=text]{ flex:1; }
+  .add-checklist-row{ display:flex; gap:8px; margin-top:4px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+  .weekday-picker{ display:flex; gap:4px; }
+  .wd{ width:32px; height:32px; border-radius:50%; border:1.5px solid var(--line); font-size:11.5px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-soft); font-weight:600; }
+  .wd.sel{ background:var(--gold); color:#fff; border-color:var(--gold); }
+  .daylist-item{ padding:8px 0; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; font-size:13.5px; }
+  .daylist-item:last-child{ border-bottom:none; }
+
+  #bottomnav{ display:none; }
+
+  @media (max-width: 760px){
+    #sidebar{ display:none; }
+    main{ padding:20px 16px 90px; max-width:none; }
+    #bottomnav{
+      display:flex; position:fixed; bottom:0; left:0; right:0; height:66px;
+      background:var(--panel); border-top:1px solid var(--line); z-index:40;
+      padding-bottom: env(safe-area-inset-bottom);
+      box-shadow:0 -2px 10px rgba(60,40,120,0.06);
+    }
+    .bn-btn{
+      flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:3px; color:var(--ink-soft); font-size:10.5px; cursor:pointer;
+    }
+    .bn-btn.active{ color:var(--purple); font-weight:700; }
+    .bn-icon{ font-size:17px; }
+    .modal{ margin-top:0; }
+    .stat-label{ width:100px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <aside id="sidebar">
+    <div id="brand">Daybook<span class="dot">.</span></div>
+    <nav class="tabs" id="navTabs"></nav>
+    <div id="dateblock"></div>
+  </aside>
+
+  <main id="main"></main>
+</div>
+
+<div id="bottomnav"></div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+const STORE_KEY = "daybook:data";
+let state = { dailies: [], habits: [], todos: [], contextByDate: {} };
+let currentTab = "dailies";
+let editingId = null;
+let calState = { section: "dailies", year: new Date().getFullYear(), month: new Date().getMonth() };
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORE_KEY, false);
+    if(res && res.value){
+      const loaded = JSON.parse(res.value);
+      state = Object.assign({dailies:[],habits:[],todos:[],contextByDate:{}}, loaded);
+    }
+  }catch(e){ /* no data yet */ }
+  render();
+}
+let saveTimeout;
+function saveState(){
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async ()=>{
+    try{ await window.storage.set(STORE_KEY, JSON.stringify(state), false); }
+    catch(e){ console.error("save failed", e); }
+  }, 150);
+}
+
+// Swaps id's position with its visible neighbor (dir -1 = up, +1 = down),
+// but performs the swap in the underlying full array so order persists
+// even though the on-screen list may be a filtered subset.
+function moveVisible(fullArray, visibleList, id, dir){
+  const vIdx = visibleList.findIndex(x=>x.id===id);
+  const swapIdx = vIdx + dir;
+  if(vIdx<0 || swapIdx<0 || swapIdx>=visibleList.length) return;
+  const otherId = visibleList[swapIdx].id;
+  const aIdx = fullArray.findIndex(x=>x.id===id);
+  const bIdx = fullArray.findIndex(x=>x.id===otherId);
+  if(aIdx<0 || bIdx<0) return;
+  [fullArray[aIdx], fullArray[bIdx]] = [fullArray[bIdx], fullArray[aIdx]];
+}
+
+function getContextFor(dateStr){
+  return state.contextByDate[dateStr] || "home";
+}
+function setContextFor(dateStr, ctx){
+  state.contextByDate[dateStr] = ctx;
+  saveState();
+}
+
+const TABS = [
+  {id:"dailies", label:"Dailies", icon:"◆"},
+  {id:"habits", label:"Habits", icon:"●"},
+  {id:"todos", label:"To Do", icon:"▸"},
+  {id:"calendar", label:"Calendar", icon:"▦"},
+  {id:"stats", label:"Stats", icon:"◧"},
+];
+
+function renderNav(){
+  const navTabs = document.getElementById("navTabs");
+  navTabs.innerHTML = "";
+  TABS.forEach(t=>{
+    const el = document.createElement("div");
+    el.className = "tab-btn" + (currentTab===t.id ? " active":"");
+    el.innerHTML = `<span class="tab-icon">${t.icon}</span> ${t.label}`;
+    el.onclick = ()=>{ currentTab=t.id; render(); };
+    navTabs.appendChild(el);
+  });
+  const bn = document.getElementById("bottomnav");
+  bn.innerHTML = "";
+  TABS.forEach(t=>{
+    const el = document.createElement("div");
+    el.className = "bn-btn" + (currentTab===t.id ? " active":"");
+    el.innerHTML = `<div class="bn-icon">${t.icon}</div><div>${t.label}</div>`;
+    el.onclick = ()=>{ currentTab=t.id; render(); };
+    bn.appendChild(el);
+  });
+  document.getElementById("dateblock").textContent = new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+}
+
+function render(){
+  renderNav();
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  if(currentTab==="dailies") renderDailies();
+  else if(currentTab==="habits") renderHabits();
+  else if(currentTab==="todos") renderTodos();
+  else if(currentTab==="calendar") renderCalendar();
+  else if(currentTab==="stats") renderStats();
+}
+
+function seedSampleData(){
+  if(!confirm("Add a few example dailies, habits, and to-dos to try out the app? You can delete them anytime.")) return;
+  const today = todayStr();
+  state.dailies.push(
+    {id:uid(), title:"Morning workout", notes:"20 min cardio + stretch", checklist:[], startTime:"06:30", durationMin:30,
+     context:"any", schedule:{startDate:today, repeat:"daily", weekdays:[]}, completions:[]},
+    {id:uid(), title:"Team standup", notes:"", checklist:[{id:uid(),text:"Share yesterday's update",done:false},{id:uid(),text:"Flag blockers",done:false}],
+     startTime:"09:30", durationMin:15, context:"office", schedule:{startDate:today, repeat:"weekly", weekdays:[1,2,3,4,5]}, completions:[]},
+    {id:uid(), title:"Water the plants", notes:"", checklist:[], startTime:"", durationMin:null,
+     context:"home", schedule:{startDate:today, repeat:"daily", weekdays:[]}, completions:[]},
+    {id:uid(), title:"Plan tomorrow", notes:"5 min review of the calendar and to-do list", checklist:[], startTime:"18:00", durationMin:10,
+     context:"any", schedule:{startDate:today, repeat:"daily", weekdays:[]}, completions:[]}
+  );
+  state.habits.push(
+    {id:uid(), title:"Read 10 pages", frequency:"daily", completions:[]},
+    {id:uid(), title:"Meditate", frequency:"weekly", completions:[]}
+  );
+  state.todos.push(
+    {id:uid(), title:"Call the dentist", notes:"Reschedule cleaning", dueDate:today, priority:"Normal", startTime:"11:00", durationMin:15, done:false},
+    {id:uid(), title:"Review budget spreadsheet", notes:"", dueDate:today, priority:"High", startTime:"14:00", durationMin:45, done:false},
+    {id:uid(), title:"Buy birthday gift", notes:"", dueDate:"", priority:"Low", startTime:"", durationMin:null, done:false}
+  );
+  state.contextByDate[today] = "office";
+  saveState(); render();
+}
+
+function isDueOnDate(d, dateStr){
+  if(!d.schedule) return true;
+  const {startDate, repeat, weekdays} = d.schedule;
+  if(startDate && startDate > dateStr) return false;
+  if(!repeat || repeat==="none") return startDate === dateStr;
+  if(repeat==="daily") return true;
+  if(repeat==="weekly"){
+    const dow = new Date(dateStr+"T00:00:00").getDay();
+    return (weekdays||[]).includes(dow);
+  }
+  if(repeat==="monthly"){
+    const startDay = new Date(startDate+"T00:00:00").getDate();
+    return new Date(dateStr+"T00:00:00").getDate() === startDay;
+  }
+  if(repeat==="yearly"){
+    const s = new Date(startDate+"T00:00:00");
+    const n = new Date(dateStr+"T00:00:00");
+    return s.getDate()===n.getDate() && s.getMonth()===n.getMonth();
+  }
+  return true;
+}
+function matchesContext(d, ctx){
+  return !d.context || d.context==="any" || d.context===ctx;
+}
+
+function renderDailies(){
+  const main = document.getElementById("main");
+  const today = todayStr();
+  const ctx = getContextFor(today);
+  const dueAll = state.dailies.filter(d=> isDueOnDate(d, today));
+  const due = dueAll.filter(d=> matchesContext(d, ctx));
+  const hiddenCount = dueAll.length - due.length;
+  main.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Dailies</h1>
+        <div class="page-sub">${due.length} scheduled for today${hiddenCount ? ` · ${hiddenCount} hidden (set to ${ctx==='home'?'Office':'Home'} only)` : ""}</div>
+      </div>
+      <button class="btn" onclick="openDailyModal()">+ New daily</button>
+    </div>
+    <div style="margin-bottom:8px;">
+      <div class="segctrl">
+        <div class="seg ${ctx==='home'?'sel home':''}" onclick="setContextFor('${today}','home'); render();">🏠 Home</div>
+        <div class="seg ${ctx==='office'?'sel office':''}" onclick="setContextFor('${today}','office'); render();">🏢 Office</div>
+      </div>
+      <div class="ctx-hint">Only dailies set to "Home only" or "Office only" get filtered by this toggle — "Every day" items always show.</div>
+    </div>
+    <div id="dailyList" style="margin-top:14px;"></div>
+  `;
+  const list = document.getElementById("dailyList");
+  if(due.length===0){
+    list.innerHTML = `<div class="empty">Nothing scheduled for ${ctx==='home'?'a home':'an office'} day. Create a daily to get started, or <a href="#" onclick="seedSampleData(); return false;">load sample data</a>.</div>`;
+    return;
+  }
+  due.forEach((d,idx)=>{
+    const doneToday = (d.completions||[]).includes(today);
+    const card = document.createElement("div");
+    card.className = "card" + (d.context==='home' ? " ctx-home" : d.context==='office' ? " ctx-office" : "");
+    let checklistHtml = "";
+    if(d.checklist && d.checklist.length){
+      checklistHtml = `<div class="checklist-mini">` + d.checklist.map(ci=>`
+        <div class="checklist-mini-row ${ci.done?'done':''}">
+          <input type="checkbox" ${ci.done?'checked':''} onchange="toggleChecklistItem('${d.id}','${ci.id}')">
+          <span>${escapeHtml(ci.text)}</span>
+        </div>`).join("") + `</div>`;
+    }
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="check-circle ${doneToday?'done':''}" onclick="toggleDailyDone('${d.id}','${today}')"></div>
+        <div style="flex:1">
+          <div class="item-title ${doneToday?'done':''}">${escapeHtml(d.title)}</div>
+          <div class="item-meta">
+            <span class="tag">${scheduleLabel(d.schedule)}</span>
+            ${d.context==='home' ? `<span class="tag home">🏠 Home only</span>` : d.context==='office' ? `<span class="tag office">🏢 Office only</span>` : `<span class="tag">🏠🏢 Every day</span>`}
+            ${d.startTime ? `<span class="tag gold">⏰ ${formatTime(d.startTime)}${d.durationMin ? ` · ${d.durationMin}m` : ""}</span>` : d.reminder ? `<span class="tag gold">⏰ ${escapeHtml(d.reminder)}</span>` : ""}
+          </div>
+          ${d.notes ? `<div class="item-notes">${escapeHtml(d.notes)}</div>` : ""}
+          ${checklistHtml}
+        </div>
+        <div class="reorder-grp">
+          <button class="icon-btn" ${idx===0?'disabled':''} onclick="moveDaily('${d.id}',-1)">▲</button>
+          <button class="icon-btn" ${idx===due.length-1?'disabled':''} onclick="moveDaily('${d.id}',1)">▼</button>
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="openDailyModal('${d.id}')">✎</button>
+          <button class="icon-btn" onclick="deleteDaily('${d.id}')">✕</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+function moveDaily(id, dir){
+  const today = todayStr();
+  const ctx = getContextFor(today);
+  const due = state.dailies.filter(d=> isDueOnDate(d, today) && matchesContext(d, ctx));
+  moveVisible(state.dailies, due, id, dir);
+  saveState(); render();
+}
+function formatTime(t){
+  if(!t) return "";
+  const [h,m] = t.split(":").map(Number);
+  const ampm = h<12 ? "AM" : "PM";
+  const h12 = h%12===0 ? 12 : h%12;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function scheduleLabel(s){
+  if(!s || !s.repeat || s.repeat==="none") return s && s.startDate ? "One time · " + s.startDate : "One time";
+  const map = {daily:"Daily", weekly:"Weekly", monthly:"Monthly", yearly:"Yearly"};
+  return map[s.repeat] || s.repeat;
+}
+
+function toggleDailyDone(id, dateStr){
+  dateStr = dateStr || todayStr();
+  const d = state.dailies.find(x=>x.id===id);
+  if(!d) return;
+  d.completions = d.completions || [];
+  const i = d.completions.indexOf(dateStr);
+  if(i>=0) d.completions.splice(i,1); else d.completions.push(dateStr);
+  saveState(); render();
+}
+function toggleChecklistItem(dailyId, itemId){
+  const d = state.dailies.find(x=>x.id===dailyId);
+  if(!d) return;
+  const ci = (d.checklist||[]).find(c=>c.id===itemId);
+  if(ci) ci.done = !ci.done;
+  saveState(); render();
+}
+function deleteDaily(id){
+  state.dailies = state.dailies.filter(x=>x.id!==id);
+  saveState(); render();
+}
+
+function openDailyModal(id){
+  editingId = id || null;
+  const d = id ? state.dailies.find(x=>x.id===id) : {
+    title:"", notes:"", checklist:[], schedule:{startDate: todayStr(), repeat:"none", weekdays:[]}, reminder:"", context:"any"
+  };
+  const tmpChecklist = JSON.parse(JSON.stringify(d.checklist||[]));
+  const tmpWeekdays = new Set((d.schedule && d.schedule.weekdays)||[]);
+  const repeat = (d.schedule && d.schedule.repeat) || "none";
+  const context = d.context || "any";
+
+  showModal(`
+    <h2>${id ? "Edit daily" : "New daily"}</h2>
+    <div class="field"><label>Task title</label><input type="text" id="f_title" value="${escapeAttr(d.title)}" placeholder="e.g. Morning stretch"></div>
+    <div class="field"><label>Notes</label><textarea id="f_notes" placeholder="Optional details">${escapeHtml(d.notes||"")}</textarea></div>
+
+    <div class="field">
+      <label>Applies when</label>
+      <div class="pillgroup" id="contextPills">
+        <div class="pill ${context==='any'?'sel':''}" data-c="any" onclick="selectContextPill('any')">Every day (Home &amp; Office)</div>
+        <div class="pill ${context==='home'?'sel home':''}" data-c="home" onclick="selectContextPill('home')">🏠 Home only</div>
+        <div class="pill ${context==='office'?'sel office':''}" data-c="office" onclick="selectContextPill('office')">🏢 Office only</div>
+      </div>
+      <div class="ctx-hint">Pick "Home only" or "Office only" if this should disappear on the other kind of day. Most tasks should stay "Every day".</div>
+    </div>
+
+    <div class="field">
+      <label>Checklist</label>
+      <div id="checklistEditWrap"></div>
+      <div class="add-checklist-row">
+        <input type="text" id="newChecklistText" placeholder="Add checklist item">
+        <button class="btn ghost small" type="button" onclick="addChecklistItemTmp()">Add</button>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field"><label>Start date</label><input type="date" id="f_startdate" value="${d.schedule?d.schedule.startDate:todayStr()}"></div>
+      <div class="field">
+        <label>Repeats</label>
+        <div class="pillgroup" id="repeatPills">
+          ${["none","daily","weekly","monthly","yearly"].map(r=>`<div class="pill ${repeat===r?'sel':''}" data-r="${r}" onclick="selectRepeatPill('${r}')">${r==='none'?'Never':r[0].toUpperCase()+r.slice(1)}</div>`).join("")}
+        </div>
+      </div>
+    </div>
+
+    <div class="field" id="weekdayField" style="${repeat==='weekly'?'':'display:none;'}">
+      <label>On which days</label>
+      <div class="weekday-picker" id="weekdayPicker">
+        ${["S","M","T","W","T","F","S"].map((l,i)=>`<div class="wd ${tmpWeekdays.has(i)?'sel':''}" data-d="${i}" onclick="toggleWeekday(${i})">${l}</div>`).join("")}
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field"><label>Start time (optional)</label><input type="time" id="f_starttime" value="${escapeAttr(d.startTime||"")}"></div>
+      <div class="field"><label>Duration (minutes)</label><input type="text" inputmode="numeric" id="f_duration" placeholder="e.g. 30" value="${d.durationMin||""}"></div>
+    </div>
+    <div class="ctx-hint" style="margin-top:-8px; margin-bottom:14px;">Set a start time to see this on the Calendar's day timeline and get it counted when finding free slots.</div>
+
+    <div class="modal-actions">
+      ${id ? `<button class="btn danger" onclick="deleteDaily('${id}'); closeModal();">Delete</button>` : ""}
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveDailyFromModal()">${id?"Save changes":"Create daily"}</button>
+    </div>
+  `);
+
+  window._tmpChecklist = tmpChecklist;
+  window._tmpWeekdays = tmpWeekdays;
+  window._tmpRepeat = repeat;
+  window._tmpContext = context;
+  renderChecklistEditRows();
+}
+function selectContextPill(c){
+  window._tmpContext = c;
+  document.querySelectorAll("#contextPills .pill").forEach(p=>{
+    p.classList.remove("sel","home","office");
+    if(p.dataset.c===c){ p.classList.add("sel"); if(c==="home") p.classList.add("home"); if(c==="office") p.classList.add("office"); }
+  });
+}
+
+function renderChecklistEditRows(){
+  const wrap = document.getElementById("checklistEditWrap");
+  if(!wrap) return;
+  wrap.innerHTML = window._tmpChecklist.map((ci,idx)=>`
+    <div class="checklist-edit-row">
+      <span style="flex:1; font-size:13.5px;">${escapeHtml(ci.text)}</span>
+      <button class="icon-btn" onclick="removeChecklistItemTmp(${idx})">✕</button>
+    </div>
+  `).join("");
+}
+function addChecklistItemTmp(){
+  const inp = document.getElementById("newChecklistText");
+  const v = inp.value.trim();
+  if(!v) return;
+  window._tmpChecklist.push({id: uid(), text: v, done:false});
+  inp.value = "";
+  renderChecklistEditRows();
+}
+function removeChecklistItemTmp(idx){
+  window._tmpChecklist.splice(idx,1);
+  renderChecklistEditRows();
+}
+function selectRepeatPill(r){
+  window._tmpRepeat = r;
+  document.querySelectorAll("#repeatPills .pill").forEach(p=>p.classList.toggle("sel", p.dataset.r===r));
+  document.getElementById("weekdayField").style.display = r==="weekly" ? "" : "none";
+}
+function toggleWeekday(i){
+  if(window._tmpWeekdays.has(i)) window._tmpWeekdays.delete(i); else window._tmpWeekdays.add(i);
+  document.querySelectorAll("#weekdayPicker .wd").forEach(w=>{
+    w.classList.toggle("sel", window._tmpWeekdays.has(parseInt(w.dataset.d)));
+  });
+}
+function saveDailyFromModal(){
+  const title = document.getElementById("f_title").value.trim();
+  if(!title){ alert("Give this daily a title."); return; }
+  const notes = document.getElementById("f_notes").value.trim();
+  const startDate = document.getElementById("f_startdate").value || todayStr();
+  const startTime = document.getElementById("f_starttime").value || "";
+  const durationRaw = document.getElementById("f_duration").value.trim();
+  const durationMin = durationRaw ? Math.max(0, parseInt(durationRaw,10)||0) : null;
+  const repeat = window._tmpRepeat;
+  const weekdays = Array.from(window._tmpWeekdays);
+  const checklist = window._tmpChecklist;
+  const context = window._tmpContext;
+
+  if(editingId){
+    const d = state.dailies.find(x=>x.id===editingId);
+    Object.assign(d, {title, notes, checklist, startTime, durationMin, context, schedule:{startDate, repeat, weekdays}});
+  }else{
+    state.dailies.push({
+      id: uid(), title, notes, checklist, startTime, durationMin, context,
+      schedule:{startDate, repeat, weekdays},
+      completions: []
+    });
+  }
+  saveState();
+  closeModal();
+  render();
+}
+
+function last7Dates(){
+  const arr = [];
+  for(let i=6;i>=0;i--){
+    const dt = new Date();
+    dt.setDate(dt.getDate()-i);
+    arr.push(dt.toISOString().slice(0,10));
+  }
+  return arr;
+}
+function computeStreak(h){
+  let streak = 0;
+  let d = new Date();
+  while(true){
+    const key = d.toISOString().slice(0,10);
+    if((h.completions||[]).includes(key)){ streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+function computeBestStreak(h){
+  const comps = (h.completions||[]).slice().sort();
+  if(comps.length===0) return 0;
+  let best=1, cur=1;
+  for(let i=1;i<comps.length;i++){
+    const prev = new Date(comps[i-1]+"T00:00:00");
+    const curD = new Date(comps[i]+"T00:00:00");
+    const diff = (curD-prev)/86400000;
+    if(diff===1) cur++; else cur=1;
+    if(cur>best) best=cur;
+  }
+  return best;
+}
+
+function renderHabits(){
+  const main = document.getElementById("main");
+  main.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Habits</h1>
+        <div class="page-sub">${state.habits.length} being tracked</div>
+      </div>
+      <button class="btn orange" onclick="openHabitModal()">+ New habit</button>
+    </div>
+    <div id="habitList"></div>
+  `;
+  const list = document.getElementById("habitList");
+  if(state.habits.length===0){
+    list.innerHTML = `<div class="empty">No habits yet. Add one to start building a streak, or <a href="#" onclick="seedSampleData(); return false;">load sample data</a>.</div>`;
+    return;
+  }
+  const days = last7Dates();
+  const dayLabels = days.map(d=> "SMTWTFS"[new Date(d+"T00:00:00").getDay()]);
+  const today = todayStr();
+  state.habits.forEach((h,idx)=>{
+    const streak = computeStreak(h);
+    const card = document.createElement("div");
+    card.className = "card habit-card";
+    card.innerHTML = `
+      <div class="card-top">
+        <div style="flex:1">
+          <div class="item-title">${escapeHtml(h.title)}</div>
+          <div class="item-meta">
+            <span class="tag" style="background:var(--orange-soft); color:#B36A00;">${h.frequency==='weekly'?'Weekly':'Daily'}</span>
+            ${streak>0 ? `<span class="streak">🔥 ${streak} day streak</span>` : ""}
+          </div>
+          <div class="habit-week">
+            ${days.map((d,i)=>`<div class="habit-dot ${(h.completions||[]).includes(d)?'done':''} ${d===today?'today':''}" onclick="toggleHabitDay('${h.id}','${d}')">${dayLabels[i]}</div>`).join("")}
+          </div>
+        </div>
+        <div class="reorder-grp">
+          <button class="icon-btn" ${idx===0?'disabled':''} onclick="moveHabit('${h.id}',-1)">▲</button>
+          <button class="icon-btn" ${idx===state.habits.length-1?'disabled':''} onclick="moveHabit('${h.id}',1)">▼</button>
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="openHabitModal('${h.id}')">✎</button>
+          <button class="icon-btn" onclick="deleteHabit('${h.id}')">✕</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+function moveHabit(id, dir){
+  moveVisible(state.habits, state.habits, id, dir);
+  saveState(); render();
+}
+function toggleHabitDay(id, dateKey){
+  const h = state.habits.find(x=>x.id===id);
+  if(!h) return;
+  h.completions = h.completions || [];
+  const i = h.completions.indexOf(dateKey);
+  if(i>=0) h.completions.splice(i,1); else h.completions.push(dateKey);
+  saveState(); render();
+}
+function deleteHabit(id){
+  state.habits = state.habits.filter(x=>x.id!==id);
+  saveState(); render();
+}
+function openHabitModal(id){
+  editingId = id || null;
+  const h = id ? state.habits.find(x=>x.id===id) : {title:"", frequency:"daily"};
+  showModal(`
+    <h2>${id ? "Edit habit" : "New habit"}</h2>
+    <div class="field"><label>Habit</label><input type="text" id="h_title" value="${escapeAttr(h.title)}" placeholder="e.g. Read 10 pages"></div>
+    <div class="field">
+      <label>Frequency</label>
+      <div class="pillgroup" id="habitFreqPills">
+        <div class="pill ${h.frequency==='daily'?'sel':''}" data-f="daily" onclick="selectHabitFreq('daily')">Daily</div>
+        <div class="pill ${h.frequency==='weekly'?'sel':''}" data-f="weekly" onclick="selectHabitFreq('weekly')">Weekly</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      ${id ? `<button class="btn danger" onclick="deleteHabit('${id}'); closeModal();">Delete</button>` : ""}
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn orange" onclick="saveHabitFromModal()">${id?"Save changes":"Create habit"}</button>
+    </div>
+  `);
+  window._tmpHabitFreq = h.frequency || "daily";
+}
+function selectHabitFreq(f){
+  window._tmpHabitFreq = f;
+  document.querySelectorAll("#habitFreqPills .pill").forEach(p=>p.classList.toggle("sel", p.dataset.f===f));
+}
+function saveHabitFromModal(){
+  const title = document.getElementById("h_title").value.trim();
+  if(!title){ alert("Give this habit a name."); return; }
+  const frequency = window._tmpHabitFreq;
+  if(editingId){
+    const h = state.habits.find(x=>x.id===editingId);
+    Object.assign(h, {title, frequency});
+  }else{
+    state.habits.push({id: uid(), title, frequency, completions: []});
+  }
+  saveState(); closeModal(); render();
+}
+
+function renderTodos(){
+  const main = document.getElementById("main");
+  const open = state.todos.filter(t=>!t.done);
+  const done = state.todos.filter(t=>t.done);
+  main.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>To Do</h1>
+        <div class="page-sub">${open.length} open</div>
+      </div>
+      <button class="btn green" onclick="openTodoModal()">+ New task</button>
+    </div>
+    <div id="todoOpenList"></div>
+    ${done.length ? `<h3 style="margin-top:26px; font-size:14px; color:var(--ink-soft); font-weight:700;">Completed</h3><div id="todoDoneList"></div>` : ""}
+  `;
+  const openList = document.getElementById("todoOpenList");
+  if(open.length===0){
+    openList.innerHTML = `<div class="empty">Nothing on your list. Add a task, or <a href="#" onclick="seedSampleData(); return false;">load sample data</a>.</div>`;
+  }else{
+    open.forEach((t,idx)=> openList.appendChild(todoCard(t, idx, open.length)));
+  }
+  if(done.length){
+    const doneList = document.getElementById("todoDoneList");
+    done.forEach(t=> doneList.appendChild(todoCard(t, null, null)));
+  }
+}
+function todoCard(t, idx, listLen){
+  const card = document.createElement("div");
+  card.className = "card todo-card";
+  const reorderHtml = idx===null ? "" : `
+        <div class="reorder-grp">
+          <button class="icon-btn" ${idx===0?'disabled':''} onclick="moveTodo('${t.id}',-1)">▲</button>
+          <button class="icon-btn" ${idx===listLen-1?'disabled':''} onclick="moveTodo('${t.id}',1)">▼</button>
+        </div>`;
+  card.innerHTML = `
+    <div class="card-top">
+      <div class="check-circle ${t.done?'done todo':''}" onclick="toggleTodoDone('${t.id}')"></div>
+      <div style="flex:1">
+        <div class="item-title ${t.done?'done':''}">${escapeHtml(t.title)}</div>
+        <div class="item-meta">
+          ${t.dueDate ? `<span class="tag green">Due ${t.dueDate}</span>` : ""}
+          ${t.priority ? `<span class="tag gold">${t.priority}</span>` : ""}
+          ${t.startTime ? `<span class="tag gold">⏰ ${formatTime(t.startTime)}${t.durationMin ? ` · ${t.durationMin}m` : ""}</span>` : ""}
+        </div>
+        ${t.notes ? `<div class="item-notes">${escapeHtml(t.notes)}</div>` : ""}
+      </div>
+      ${reorderHtml}
+      <div class="card-actions">
+        <button class="icon-btn" onclick="openTodoModal('${t.id}')">✎</button>
+        <button class="icon-btn" onclick="deleteTodo('${t.id}')">✕</button>
+      </div>
+    </div>
+  `;
+  return card;
+}
+function moveTodo(id, dir){
+  const open = state.todos.filter(t=>!t.done);
+  moveVisible(state.todos, open, id, dir);
+  saveState(); render();
+}
+function toggleTodoDone(id){
+  const t = state.todos.find(x=>x.id===id);
+  if(t) t.done = !t.done;
+  saveState(); render();
+}
+function deleteTodo(id){
+  state.todos = state.todos.filter(x=>x.id!==id);
+  saveState(); render();
+}
+function openTodoModal(id){
+  editingId = id || null;
+  const t = id ? state.todos.find(x=>x.id===id) : {title:"", notes:"", dueDate:"", priority:"Normal"};
+  showModal(`
+    <h2>${id ? "Edit task" : "New task"}</h2>
+    <div class="field"><label>Task</label><input type="text" id="t_title" value="${escapeAttr(t.title)}" placeholder="e.g. Call the plumber"></div>
+    <div class="field"><label>Notes</label><textarea id="t_notes">${escapeHtml(t.notes||"")}</textarea></div>
+    <div class="row2">
+      <div class="field"><label>Due date</label><input type="date" id="t_due" value="${t.dueDate||""}"></div>
+      <div class="field">
+        <label>Priority</label>
+        <div class="pillgroup" id="todoPriorityPills">
+          ${["Low","Normal","High"].map(p=>`<div class="pill ${t.priority===p?'sel':''}" data-p="${p}" onclick="selectTodoPriority('${p}')">${p}</div>`).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Start time (optional)</label><input type="time" id="t_starttime" value="${escapeAttr(t.startTime||"")}"></div>
+      <div class="field"><label>Duration (minutes)</label><input type="text" inputmode="numeric" id="t_duration" placeholder="e.g. 45" value="${t.durationMin||""}"></div>
+    </div>
+    <div class="ctx-hint" style="margin-top:-8px; margin-bottom:14px;">Add a start time (on the due date) to see it on the Calendar's day timeline and free-slot finder.</div>
+    <div class="modal-actions">
+      ${id ? `<button class="btn danger" onclick="deleteTodo('${id}'); closeModal();">Delete</button>` : ""}
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn green" onclick="saveTodoFromModal()">${id?"Save changes":"Add task"}</button>
+    </div>
+  `);
+  window._tmpTodoPriority = t.priority || "Normal";
+}
+function selectTodoPriority(p){
+  window._tmpTodoPriority = p;
+  document.querySelectorAll("#todoPriorityPills .pill").forEach(el=>el.classList.toggle("sel", el.dataset.p===p));
+}
+function saveTodoFromModal(){
+  const title = document.getElementById("t_title").value.trim();
+  if(!title){ alert("Give this task a title."); return; }
+  const notes = document.getElementById("t_notes").value.trim();
+  const dueDate = document.getElementById("t_due").value;
+  const priority = window._tmpTodoPriority;
+  const startTime = document.getElementById("t_starttime").value || "";
+  const durationRaw = document.getElementById("t_duration").value.trim();
+  const durationMin = durationRaw ? Math.max(0, parseInt(durationRaw,10)||0) : null;
+  if(editingId){
+    const t = state.todos.find(x=>x.id===editingId);
+    Object.assign(t, {title, notes, dueDate, priority, startTime, durationMin});
+  }else{
+    state.todos.push({id: uid(), title, notes, dueDate, priority, startTime, durationMin, done:false});
+  }
+  saveState(); closeModal(); render();
+}
+
+function renderCalendar(){
+  const main = document.getElementById("main");
+  main.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Calendar</h1>
+        <div class="page-sub">See how your dailies and habits stack up day by day</div>
+      </div>
+      <div class="segctrl">
+        <div class="seg ${calState.section==='dailies'?'sel home':''}" onclick="calState.section='dailies'; render();">Dailies</div>
+        <div class="seg ${calState.section==='habits'?'sel office':''}" onclick="calState.section='habits'; render();">Habits</div>
+      </div>
+    </div>
+    <div class="cal-head">
+      <div class="cal-month-label">${monthName(calState.month)} ${calState.year}</div>
+      <div class="cal-nav">
+        <button onclick="calNav(-1)">‹</button>
+        <button onclick="calNav(1)">›</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  `;
+  const grid = document.getElementById("calGrid");
+  ["S","M","T","W","T","F","S"].forEach(d=>{
+    const el = document.createElement("div");
+    el.className = "cal-dow"; el.textContent = d;
+    grid.appendChild(el);
+  });
+  const firstDay = new Date(calState.year, calState.month, 1);
+  const startOffset = firstDay.getDay();
+  const daysInMonth = new Date(calState.year, calState.month+1, 0).getDate();
+  const today = todayStr();
+
+  for(let i=0;i<startOffset;i++){
+    const el = document.createElement("div");
+    el.className = "cal-cell empty-cell";
+    grid.appendChild(el);
+  }
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = `${calState.year}-${String(calState.month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const cell = document.createElement("div");
+    cell.className = "cal-cell" + (dateStr===today ? " today":"");
+    let dotsHtml = "";
+    if(calState.section==='dailies'){
+      const ctx = getContextFor(dateStr);
+      const due = state.dailies.filter(d=> isDueOnDate(d, dateStr) && matchesContext(d, ctx));
+      const doneCount = due.filter(d=> (d.completions||[]).includes(dateStr)).length;
+      if(due.length>0){
+        const pct = doneCount/due.length;
+        const color = pct===1 ? 'var(--green)' : pct>0 ? 'var(--gold)' : 'var(--line)';
+        dotsHtml = `<div class="cal-dots"><div class="cal-dot" style="background:${color}"></div></div>`;
+      }
+    }else{
+      const activeHabits = state.habits;
+      const doneCount = activeHabits.filter(h=> (h.completions||[]).includes(dateStr)).length;
+      if(activeHabits.length>0 && doneCount>0){
+        const pct = doneCount/activeHabits.length;
+        const color = pct===1 ? 'var(--green)' : 'var(--orange)';
+        dotsHtml = `<div class="cal-dots"><div class="cal-dot" style="background:${color}"></div></div>`;
+      }
+    }
+    cell.innerHTML = `<div class="dnum">${day}</div>${dotsHtml}`;
+    cell.onclick = ()=> openDayModal(dateStr);
+    grid.appendChild(cell);
+  }
+}
+function monthName(m){
+  return ["January","February","March","April","May","June","July","August","September","October","November","December"][m];
+}
+function calNav(dir){
+  calState.month += dir;
+  if(calState.month<0){ calState.month=11; calState.year--; }
+  if(calState.month>11){ calState.month=0; calState.year++; }
+  render();
+}
+const DAY_WINDOW_START = 8*60;   // 8:00 AM, in minutes from midnight
+const DAY_WINDOW_END   = 20*60;  // 8:00 PM
+function minToLabel(min){
+  const h = Math.floor(min/60), m = min%60;
+  const ampm = h<12 ? "AM" : "PM";
+  const h12 = h%12===0 ? 12 : h%12;
+  return `${h12}${m?":"+String(m).padStart(2,'0'):""} ${ampm}`;
+}
+function durLabel(min){
+  const h = Math.floor(min/60), m = min%60;
+  if(h && m) return `${h}h ${m}m`;
+  if(h) return `${h}h`;
+  return `${m}m`;
+}
+function buildDayTimeline(dateStr){
+  const ctx = getContextFor(dateStr);
+  const timedDailies = state.dailies
+    .filter(d=> isDueOnDate(d, dateStr) && matchesContext(d, ctx) && d.startTime)
+    .map(d=>({ title:d.title, startMin: toMin(d.startTime), dur: d.durationMin||30,
+               done:(d.completions||[]).includes(dateStr), kind:'daily', id:d.id }));
+  const timedTodos = state.todos
+    .filter(t=> t.dueDate===dateStr && t.startTime)
+    .map(t=>({ title:t.title, startMin: toMin(t.startTime), dur: t.durationMin||30,
+               done:t.done, kind:'todo', id:t.id }));
+  const busy = [...timedDailies, ...timedTodos]
+    .map(x=>({...x, endMin: x.startMin + Math.max(5,x.dur)}))
+    .sort((a,b)=> a.startMin-b.startMin);
+
+  const rows = [];
+  let cursor = DAY_WINDOW_START;
+  busy.forEach(b=>{
+    const s = Math.max(b.startMin, DAY_WINDOW_START), e = Math.min(b.endMin, DAY_WINDOW_END);
+    if(e<=DAY_WINDOW_START || s>=DAY_WINDOW_END) return;
+    if(s > cursor){ rows.push({free:true, start:cursor, end:s}); }
+    rows.push({free:false, start:s, end:e, title:b.title, done:b.done});
+    cursor = Math.max(cursor, e);
+  });
+  if(cursor < DAY_WINDOW_END) rows.push({free:true, start:cursor, end:DAY_WINDOW_END});
+
+  const untimedDailies = state.dailies.filter(d=> isDueOnDate(d, dateStr) && matchesContext(d, ctx) && !d.startTime);
+  return {rows, untimedDailies, ctx};
+}
+function toMin(hhmm){
+  const [h,m] = hhmm.split(":").map(Number);
+  return h*60+(m||0);
+}
+
+function openDayModal(dateStr){
+  let html = `<h2>${dateStr}</h2>`;
+  if(calState.section==='dailies'){
+    const {rows, untimedDailies, ctx} = buildDayTimeline(dateStr);
+    html += `<div class="page-sub" style="margin-bottom:10px;">Context that day: ${ctx==='home'?'🏠 Home':'🏢 Office'} · window ${minToLabel(DAY_WINDOW_START)}–${minToLabel(DAY_WINDOW_END)}</div>`;
+
+    if(rows.length===0){
+      html += `<div class="empty">No timed items — the whole window is free.</div>`;
+    }else{
+      html += `<div class="timeline-wrap">`;
+      rows.forEach(r=>{
+        if(r.free){
+          html += `<div class="tl-row tl-free"><div class="tl-time">${minToLabel(r.start)}</div><div class="tl-body">Free · ${durLabel(r.end-r.start)}</div></div>`;
+        }else{
+          html += `<div class="tl-row tl-busy"><div class="tl-time">${minToLabel(r.start)}</div><div class="tl-body" style="${r.done?'text-decoration:line-through;color:var(--ink-soft);':''}">${escapeHtml(r.title)} <span style="color:var(--ink-soft); font-weight:400;">(${durLabel(r.end-r.start)})</span></div></div>`;
+        }
+      });
+      html += `</div>`;
+    }
+
+    if(untimedDailies.length){
+      html += `<div class="tl-untimed"><div style="font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:4px;">No fixed time</div>`;
+      untimedDailies.forEach(d=>{
+        const done = (d.completions||[]).includes(dateStr);
+        html += `<div class="tl-untimed-row"><div class="check-circle ${done?'done':''}" onclick="toggleDailyDone('${d.id}','${dateStr}'); openDayModal('${dateStr}');"></div><span style="${done?'text-decoration:line-through;color:var(--ink-soft);':''}">${escapeHtml(d.title)}</span></div>`;
+      });
+      html += `</div>`;
+    }
+    if(rows.length===0 && untimedDailies.length===0){ html += `<div class="empty">Nothing scheduled.</div>`; }
+  }else{
+    if(state.habits.length===0){ html += `<div class="empty">No habits yet.</div>`; }
+    else{
+      state.habits.forEach(h=>{
+        const done = (h.completions||[]).includes(dateStr);
+        html += `<div class="daylist-item"><div class="check-circle ${done?'done':''}" onclick="toggleHabitDay('${h.id}','${dateStr}'); openDayModal('${dateStr}');"></div><span style="${done?'text-decoration:line-through;color:var(--ink-soft);':''}">${escapeHtml(h.title)}</span></div>`;
+      });
+    }
+  }
+  html += `<div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Close</button></div>`;
+  showModal(html);
+}
+
+function dateRangeArray(days){
+  const arr = [];
+  for(let i=days-1;i>=0;i--){
+    const dt = new Date();
+    dt.setDate(dt.getDate()-i);
+    arr.push(dt.toISOString().slice(0,10));
+  }
+  return arr;
+}
+function renderStats(){
+  const main = document.getElementById("main");
+  const range30 = dateRangeArray(30);
+  const range7 = dateRangeArray(7);
+
+  let dueTotal7=0, doneTotal7=0, dueTotal30=0, doneTotal30=0;
+  range7.forEach(dt=>{
+    const ctx = getContextFor(dt);
+    const due = state.dailies.filter(d=> isDueOnDate(d, dt) && matchesContext(d, ctx));
+    dueTotal7 += due.length;
+    doneTotal7 += due.filter(d=>(d.completions||[]).includes(dt)).length;
+  });
+  range30.forEach(dt=>{
+    const ctx = getContextFor(dt);
+    const due = state.dailies.filter(d=> isDueOnDate(d, dt) && matchesContext(d, ctx));
+    dueTotal30 += due.length;
+    doneTotal30 += due.filter(d=>(d.completions||[]).includes(dt)).length;
+  });
+  const pct7 = dueTotal7 ? Math.round(doneTotal7/dueTotal7*100) : 0;
+  const pct30 = dueTotal30 ? Math.round(doneTotal30/dueTotal30*100) : 0;
+
+  const homeDays = range30.filter(dt=>getContextFor(dt)==='home').length;
+  const officeDays = range30.filter(dt=>getContextFor(dt)==='office').length;
+
+  main.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Statistics</h1>
+        <div class="page-sub">Last 30 days overview</div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num" style="color:var(--purple)">${pct7}%</div><div class="lbl">Dailies · 7 days</div></div>
+      <div class="stat-box"><div class="num" style="color:var(--purple)">${pct30}%</div><div class="lbl">Dailies · 30 days</div></div>
+      <div class="stat-box"><div class="num" style="color:var(--orange)">${state.habits.length}</div><div class="lbl">Active habits</div></div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num" style="color:var(--blue)">${homeDays}</div><div class="lbl">🏠 Home days (30d)</div></div>
+      <div class="stat-box"><div class="num" style="color:var(--pink)">${officeDays}</div><div class="lbl">🏢 Office days (30d)</div></div>
+      <div class="stat-box"><div class="num" style="color:var(--green)">${state.todos.filter(t=>t.done).length}/${state.todos.length}</div><div class="lbl">Tasks done</div></div>
+    </div>
+
+    <h3 style="font-size:15px; margin:22px 0 10px;">Per-daily completion (30 days)</h3>
+    <div class="stat-card" id="dailyStatCard"></div>
+
+    <h3 style="font-size:15px; margin:22px 0 10px;">Habit streaks</h3>
+    <div class="stat-card" id="habitStatCard"></div>
+  `;
+
+  const dailyCard = document.getElementById("dailyStatCard");
+  if(state.dailies.length===0){
+    dailyCard.innerHTML = `<div class="empty" style="border:none; padding:6px;">No dailies yet.</div>`;
+  }else{
+    dailyCard.innerHTML = state.dailies.map(d=>{
+      let due=0, done=0;
+      range30.forEach(dt=>{
+        if(isDueOnDate(d, dt)){ due++; if((d.completions||[]).includes(dt)) done++; }
+      });
+      const pct = due ? Math.round(done/due*100) : 0;
+      const color = d.context==='home' ? 'var(--blue)' : d.context==='office' ? 'var(--pink)' : 'var(--purple)';
+      return `<div class="stat-row">
+        <div class="stat-label">${escapeHtml(d.title)}</div>
+        <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%; background:${color};"></div></div>
+        <div class="stat-pct">${pct}%</div>
+      </div>`;
+    }).join("");
+  }
+
+  const habitCard = document.getElementById("habitStatCard");
+  if(state.habits.length===0){
+    habitCard.innerHTML = `<div class="empty" style="border:none; padding:6px;">No habits yet.</div>`;
+  }else{
+    habitCard.innerHTML = state.habits.map(h=>{
+      let done30=0;
+      range30.forEach(dt=>{ if((h.completions||[]).includes(dt)) done30++; });
+      const pct = Math.round(done30/30*100);
+      const streak = computeStreak(h);
+      const best = computeBestStreak(h);
+      return `<div class="stat-row">
+        <div class="stat-label">${escapeHtml(h.title)}</div>
+        <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%; background:var(--orange);"></div></div>
+        <div class="stat-pct">${pct}%</div>
+      </div>
+      <div style="margin:-4px 0 12px 162px; font-size:11.5px; color:var(--ink-soft);">🔥 current ${streak}d · best ${best}d</div>`;
+    }).join("");
+  }
+}
+
+function showModal(html){
+  document.getElementById("modalBody").innerHTML = html;
+  document.getElementById("overlay").classList.add("open");
+}
+function closeModal(){
+  document.getElementById("overlay").classList.remove("open");
+  editingId = null;
+}
+document.getElementById("overlay").addEventListener("click", (e)=>{
+  if(e.target.id === "overlay") closeModal();
+});
+
+function escapeHtml(s){
+  return (s||"").replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+}
+function escapeAttr(s){
+  return (s||"").replace(/"/g,"&quot;");
+}
+
+loadState();
+</script>
+</body>
+</html>
